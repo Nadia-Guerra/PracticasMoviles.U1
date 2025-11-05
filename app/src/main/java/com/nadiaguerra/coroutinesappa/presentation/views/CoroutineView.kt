@@ -1,5 +1,6 @@
 package com.nadiaguerra.coroutinesappa.presentation.views
 
+import CoroutineViewModel
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,45 +21,55 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.nadiaguerra.coroutinesappa.presentation.viewmodels.CoroutineViewModel
-
 
 @Composable
-fun CoroutineView(navController: NavController, viewModel: CoroutineViewModel){
-    var color by remember {mutableStateOf(false)} //remember ess para q sea una v modificables
+fun CoroutineView(navController: NavController, viewModel: CoroutineViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .wrapContentSize(Alignment.Center)
-    ){
+    ) {
         Button(
-            onClick = {
-                color = !color
-            },
-            colors = ButtonDefaults.buttonColors(
-                containerColor =  if (color) Color.Green else Color.Red
-            )
+            onClick = { viewModel.callToApi1() }
         ) {
-            Text("Click")
+            Text("Corutina 1")
         }
-        Spacer(modifier = Modifier.height(10.dp))
-        Button(
-            onClick = {
-                viewModel.callToApi()
-            }
-        ) {
-            Text ("Click to block")
-        }
-
-        if(viewModel.isLoading.value){
+        if (viewModel.isLoading1.value) {
             Spacer(modifier = Modifier.height(10.dp))
             CircularProgressIndicator()
         }
-
-
-        if(viewModel.result.value.isNotEmpty() && !viewModel.isLoading.value){
-            Text(viewModel.result.value)
+        if (viewModel.result1.value.isNotEmpty() && !viewModel.isLoading1.value) {
+            Text(viewModel.result1.value)
         }
 
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Button(
+            onClick = { viewModel.callToApi2() }
+        ) {
+            Text("Corutina 2")
+        }
+        if (viewModel.isLoading2.value) {
+            Spacer(modifier = Modifier.height(10.dp))
+            CircularProgressIndicator()
+        }
+        if (viewModel.result2.value.isNotEmpty() && !viewModel.isLoading2.value) {
+            Text(viewModel.result2.value)
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Button(
+            onClick = { viewModel.callToApi3() }
+        ) {
+            Text("Corutina 3")
+        }
+        if (viewModel.isLoading3.value) {
+            Spacer(modifier = Modifier.height(10.dp))
+            CircularProgressIndicator()
+        }
+        if (viewModel.result3.value.isNotEmpty() && !viewModel.isLoading3.value) {
+            Text(viewModel.result3.value)
+        }
     }
 }
