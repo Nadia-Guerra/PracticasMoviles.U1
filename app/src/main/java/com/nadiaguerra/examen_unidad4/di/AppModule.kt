@@ -5,13 +5,14 @@ import com.nadiaguerra.examen_unidad4.util.Constants.Companion.BASE_URL
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
 
 @Module
-@InstallIn
+@InstallIn(SingletonComponent::class)
 object AppModule {
 
     @Singleton
