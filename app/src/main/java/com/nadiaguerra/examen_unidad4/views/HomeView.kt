@@ -10,6 +10,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.nadiaguerra.examen_unidad4.components.CardMovie
 import com.nadiaguerra.examen_unidad4.components.MainTopBar
 import com.nadiaguerra.examen_unidad4.viewmodels.MoviesViewModel
 
@@ -32,8 +36,14 @@ fun ContentHomeView(viewModel: MoviesViewModel, pad: PaddingValues){
     val movies by viewModel.movies.collectAsState()
     LazyColumn(modifier = Modifier.padding(pad)){
         items(movies){item ->
-            Text(text = item.Poster)
-
+            CardMovie(item){
+                ///
+            }
+            Text(text = item.Title,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color.White,
+                modifier = Modifier.padding(start = 10.dp)
+                )
         }
     }
 }
