@@ -1,7 +1,12 @@
 package com.nadiaguerra.examen_unidad4.viewmodels
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.util.copy
+import com.nadiaguerra.examen_unidad4.models.MovieDetails
 import com.nadiaguerra.examen_unidad4.models.MovieItem
 import com.nadiaguerra.examen_unidad4.repositories.MoviesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,10 +23,13 @@ class MoviesViewModel @Inject constructor(private val repo: MoviesRepository): V
     private val _movies = MutableStateFlow<List<MovieItem>>(emptyList())
     val movies = _movies.asStateFlow()
 
+    private val _movieDetail = MutableStateFlow<MovieDetails?>(null)
+    val movieDetail = _movieDetail.asStateFlow()
 
     init{
         fetchMovies()
     }
+
     private fun fetchMovies(){
         viewModelScope.launch{
             withContext(Dispatchers.IO){
@@ -30,5 +38,15 @@ class MoviesViewModel @Inject constructor(private val repo: MoviesRepository): V
             }
         }
     }
-
+    fun getMovieById(imdbID: String) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val result = repo.getMovieById(imdbID)
+                _movieDetail.value = result
+            }
+        }
+    }
+    fun clearMovieDetail() {
+        _movieDetail.value = null
+    }
 }

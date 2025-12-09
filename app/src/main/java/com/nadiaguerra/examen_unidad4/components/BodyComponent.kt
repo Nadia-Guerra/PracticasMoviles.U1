@@ -29,8 +29,7 @@ import com.nadiaguerra.examen_unidad4.models.MoviesModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainTopBar(title: String, showBackButton: Boolean = false, onClickBackButton: () -> Unit
-) {
+fun MainTopBar(title: String, showBackButton: Boolean = false, onClickBackButton: () -> Unit) {
     TopAppBar(
         title = { Text(text = title, color = Color.White, fontWeight = FontWeight.ExtraBold
             )

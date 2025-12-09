@@ -1,5 +1,6 @@
 package com.nadiaguerra.examen_unidad4.data
 
+import com.nadiaguerra.examen_unidad4.models.MovieDetails
 import com.nadiaguerra.examen_unidad4.models.MoviesModel
 import com.nadiaguerra.examen_unidad4.util.Constants
 import retrofit2.Response
@@ -13,4 +14,11 @@ interface ApiMovies {
         @Query("apikey") apiKey: String = Constants.API_KEY
     ): Response<MoviesModel>
 
+
+    @GET(".")
+    suspend fun getMovieById(
+        @Query("i") imdbID: String,           // ← imdbID del MovieItem
+        @Query("apikey") apiKey: String = Constants.API_KEY
+    ): Response<MovieDetails>
 }
+
