@@ -21,7 +21,6 @@ class MoviesViewModel @Inject constructor(private val repo: MoviesRepository): V
 
     private val _movies = MutableStateFlow<List<MovieItem>>(emptyList())
     val movies = _movies.asStateFlow()
-
     private val _movieDetail = MutableStateFlow<MovieDetails?>(null)
     val movieDetail = _movieDetail.asStateFlow()
 
@@ -30,6 +29,15 @@ class MoviesViewModel @Inject constructor(private val repo: MoviesRepository): V
 
     private val _isSearching = MutableStateFlow(false)
     val isSearching = _isSearching.asStateFlow()
+
+    private val _isLoadingMore = MutableStateFlow(false)
+    val isLoadingMore = _isLoadingMore.asStateFlow()
+
+    private val _currentPage = MutableStateFlow(1)
+    private val _hasMorePages = MutableStateFlow(true)
+    private val _searchCurrentPage = MutableStateFlow(1)
+    private val _searchHasMorePages = MutableStateFlow(true)
+    private var _lastSearchQuery = ""
 
     val favorites = repo.getAllFavorites().stateIn(
         viewModelScope,
@@ -47,8 +55,35 @@ class MoviesViewModel @Inject constructor(private val repo: MoviesRepository): V
     private fun fetchMovies(){
         viewModelScope.launch{
             withContext(Dispatchers.IO){
-                val result = repo.getMovies()
+                val result = repo.getMovies(page = 1)
                 _movies.value = result ?: emptyList()
+                _currentPage.value = 1
+                _hasMorePages.value = result?.isNotEmpty() ?: false
+            }
+        }
+    }
+    fun loadMoreMovies() { //scroll infinite
+        if (_isLoadingMore.value || !_hasMorePages.value) return
+
+        _isLoadingMore.value = true
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val nextPage = _currentPage.value + 1
+                val result = repo.getMovies(page = nextPage)
+
+                if (!result.isNullOrEmpty()) {
+                    val currentMovies = _movies.value
+                    val newMovies = result.filter { newMovie ->
+                        currentMovies.none { it.imdbID == newMovie.imdbID }
+                    }
+                    _movies.value = currentMovies + newMovies
+                    _currentPage.value = nextPage
+
+                    _hasMorePages.value = nextPage < 10 && result.isNotEmpty()
+                } else {
+                    _hasMorePages.value = false
+                }
+                _isLoadingMore.value = false
             }
         }
     }
@@ -70,24 +105,57 @@ class MoviesViewModel @Inject constructor(private val repo: MoviesRepository): V
     fun searchMovies(query: String) {
         if (query.isBlank()) {
             _searchResults.value = emptyList()
+            _lastSearchQuery = ""
             return
+        }
+
+        if (query != _lastSearchQuery) {
+            _searchResults.value = emptyList()
+            _searchCurrentPage.value = 1
+            _lastSearchQuery = query
         }
 
         _isSearching.value = true
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                val result = repo.searchMovies(query)
+                val result = repo.searchMovies(query, page = 1)
                 _searchResults.value = result ?: emptyList()
+                _searchHasMorePages.value = result?.isNotEmpty() ?: false
                 _isSearching.value = false
             }
         }
     }
 
+    fun loadMoreSearchResults() {
+        if (_isLoadingMore.value || !_searchHasMorePages.value || _lastSearchQuery.isEmpty()) return
+
+        _isLoadingMore.value = true
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val nextPage = _searchCurrentPage.value + 1
+                val result = repo.searchMovies(_lastSearchQuery, page = nextPage)
+
+                if (!result.isNullOrEmpty()) {
+                    val currentResults = _searchResults.value
+                    val newResults = result.filter { newMovie ->
+                        currentResults.none { it.imdbID == newMovie.imdbID }
+                    }
+                    _searchResults.value = currentResults + newResults
+                    _searchCurrentPage.value = nextPage
+                    _searchHasMorePages.value = nextPage < 10 && result.isNotEmpty()
+                } else {
+                    _searchHasMorePages.value = false
+                }
+
+                _isLoadingMore.value = false
+            }
+        }
+    }
     fun clearSearch() {
         _searchResults.value = emptyList()
     }
 
-    fun toggleFavorite(movie: MovieItem) {
+    fun changeFavorite(movie: MovieItem) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 val isFav = repo.isFavorite(movie.imdbID)

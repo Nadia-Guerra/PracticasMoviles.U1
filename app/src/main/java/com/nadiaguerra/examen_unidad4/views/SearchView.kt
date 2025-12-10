@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
@@ -25,12 +26,27 @@ fun SearchView(viewModel: MoviesViewModel, navController: NavController) {
     var searchQuery by remember { mutableStateOf("") }
     val searchResults by viewModel.searchResults.collectAsState()
     val isSearching by viewModel.isSearching.collectAsState()
+    val isLoadingMore by viewModel.isLoadingMore.collectAsState()
     val favoriteStatus by viewModel.favoriteStatus.collectAsState()
+    val gridState = rememberLazyGridState()
 
-    // Verificar favoritos para resultados de búsqueda
     LaunchedEffect(searchResults) {
         searchResults.forEach { movie ->
             viewModel.checkFavoriteStatus(movie.imdbID)
+        }
+    }
+
+    LaunchedEffect(gridState, searchResults) {
+        snapshotFlow {
+            val layoutInfo = gridState.layoutInfo
+            val totalItems = layoutInfo.totalItemsCount
+            val lastVisibleItem = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+
+            lastVisibleItem >= totalItems - 4
+        }.collect { shouldLoadMore ->
+            if (shouldLoadMore && !isLoadingMore && searchResults.isNotEmpty()) {
+                viewModel.loadMoreSearchResults()
+            }
         }
     }
 
@@ -45,7 +61,6 @@ fun SearchView(viewModel: MoviesViewModel, navController: NavController) {
                 .padding(padding)
                 .background(Color(0xFF1C1C1E))
         ) {
-            // Barra de búsqueda
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = {
@@ -85,7 +100,6 @@ fun SearchView(viewModel: MoviesViewModel, navController: NavController) {
                 )
             )
 
-            // Resultados
             when {
                 isSearching -> {
                     Box(
@@ -106,7 +120,7 @@ fun SearchView(viewModel: MoviesViewModel, navController: NavController) {
                         )
                     }
                 }
-                searchResults.isEmpty() -> {
+                searchResults.isEmpty() && !isSearching -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -120,22 +134,39 @@ fun SearchView(viewModel: MoviesViewModel, navController: NavController) {
                 else -> {
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(2),
+                        state = gridState,
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(horizontal = 8.dp),
                         contentPadding = PaddingValues(vertical = 8.dp)
                     ) {
-                        items(searchResults) { movie ->
+                        items(searchResults, key = { it.imdbID }) { movie ->
                             CardMovie(
                                 movie = movie,
                                 isFavorite = favoriteStatus[movie.imdbID] ?: false,
                                 onFavoriteClick = {
-                                    viewModel.toggleFavorite(movie)
+                                    viewModel.changeFavorite(movie)
                                 },
                                 onClick = {
                                     navController.navigate("DetailsView/${movie.imdbID}")
                                 }
                             )
+                        }
+
+                        if (isLoadingMore) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(32.dp),
+                                        color = Color(0xFFFFD700)
+                                    )
+                                }
+                            }
                         }
                     }
                 }

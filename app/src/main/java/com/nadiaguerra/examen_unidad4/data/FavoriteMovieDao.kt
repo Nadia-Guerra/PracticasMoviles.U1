@@ -15,8 +15,6 @@ interface FavoriteMovieDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFavorite(movie: FavoriteMovie)
 
-    @Delete
-    suspend fun deleteFavorite(movie: FavoriteMovie)
 
     @Query("DELETE FROM favorite_movies WHERE imdbID = :imdbID")
     suspend fun deleteFavoriteById(imdbID: String)

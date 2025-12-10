@@ -49,12 +49,7 @@ fun MainTopBar(title: String, showBackButton: Boolean = false, onClickBackButton
 }
 
 @Composable
-fun CardMovie(
-    movie: MovieItem,
-    isFavorite: Boolean = false,
-    onFavoriteClick: () -> Unit,
-    onClick: () -> Unit
-) {
+fun CardMovie(movie: MovieItem, isFavorite: Boolean = false, onFavoriteClick: () -> Unit, onClick: () -> Unit) {
     Card(
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier

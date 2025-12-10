@@ -6,6 +6,7 @@ import com.nadiaguerra.examen_unidad4.models.FavoriteMovie
 import com.nadiaguerra.examen_unidad4.models.MovieDetails
 import com.nadiaguerra.examen_unidad4.models.MovieItem
 import com.nadiaguerra.examen_unidad4.util.Constants
+import com.nadiaguerra.examen_unidad4.util.Constants.Companion.API_KEY
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
@@ -13,8 +14,8 @@ class MoviesRepository @Inject constructor(
     private val apiMovies: ApiMovies,
     private val favoriteMovieDao: FavoriteMovieDao
 ) {
-    suspend fun getMovies(): List<MovieItem>?{
-        val response = apiMovies.getMovies("movie", Constants.API_KEY)
+    suspend fun getMovies(page:Int = 1): List<MovieItem>?{
+        val response = apiMovies.getMovies("movie",page, Constants.API_KEY)
         if(response.isSuccessful){
             return response.body()?.Search
         }
@@ -29,8 +30,8 @@ class MoviesRepository @Inject constructor(
         return null
     }
 
-    suspend fun searchMovies(query: String): List<MovieItem>? {
-        val response = apiMovies.getMovies(query, Constants.API_KEY)
+    suspend fun searchMovies(query: String, page:Int = 1): List<MovieItem>? {
+        val response = apiMovies.getMovies(query,page, Constants.API_KEY)
         if(response.isSuccessful){
             return response.body()?.Search
         }

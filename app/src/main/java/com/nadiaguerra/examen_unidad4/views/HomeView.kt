@@ -22,24 +22,27 @@ import com.nadiaguerra.examen_unidad4.viewmodels.MoviesViewModel
 fun HomeView(viewModel: MoviesViewModel, navController: NavController) {
     val movies by viewModel.movies.collectAsState()
     val favoriteStatus by viewModel.favoriteStatus.collectAsState()
+    val isLoadingMore by viewModel.isLoadingMore.collectAsState()
     val gridState = rememberLazyGridState()
 
-    // Verificar el estado de favoritos para las películas visibles
     LaunchedEffect(movies) {
-        movies.forEach { movie ->
+        movies.forEach { movie -> //va verificando si las pelis son favoritas o no
             viewModel.checkFavoriteStatus(movie.imdbID)
         }
     }
 
-    // ✅ Detectar cuando llegamos al final para cargar más (scroll infinito)
     LaunchedEffect(gridState) {
-        snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .collect { lastVisibleIndex ->
-                if (lastVisibleIndex != null && lastVisibleIndex >= movies.size - 4) {
-                    // Aquí puedes cargar más películas si implementas paginación
-                    // Por ahora, la API de OMDB tiene limitaciones para scroll infinito real
-                }
+        snapshotFlow {
+            val layoutInfo = gridState.layoutInfo
+            val totalItems = layoutInfo.totalItemsCount
+            val lastVisibleItem = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+
+            lastVisibleItem >= totalItems - 4
+        }.collect { shouldLoadMore ->
+            if (shouldLoadMore && !isLoadingMore) {
+                viewModel.loadMoreMovies()
             }
+        }
     }
 
     Scaffold(
@@ -47,7 +50,7 @@ fun HomeView(viewModel: MoviesViewModel, navController: NavController) {
             MainTopBar(title = "Películas", showBackButton = false, onClickBackButton = {})
         }
     ) { padding ->
-        if (movies.isEmpty()) {
+        if (movies.isEmpty() && !isLoadingMore) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -58,9 +61,8 @@ fun HomeView(viewModel: MoviesViewModel, navController: NavController) {
                 CircularProgressIndicator(color = Color(0xFFFFD700))
             }
         } else {
-            // ✅ Grid de 4 columnas
             LazyVerticalGrid(
-                columns = GridCells.Fixed(2), // 2 columnas para móvil (ajusta a 4 si es tablet)
+                columns = GridCells.Fixed(2),
                 state = gridState,
                 modifier = Modifier
                     .fillMaxSize()
@@ -69,12 +71,12 @@ fun HomeView(viewModel: MoviesViewModel, navController: NavController) {
                     .padding(horizontal = 8.dp),
                 contentPadding = PaddingValues(vertical = 8.dp)
             ) {
-                items(movies) { movie ->
+                items(movies, key = { it.imdbID }) { movie ->
                     CardMovie(
                         movie = movie,
                         isFavorite = favoriteStatus[movie.imdbID] ?: false,
                         onFavoriteClick = {
-                            viewModel.toggleFavorite(movie)
+                            viewModel.changeFavorite(movie)
                         },
                         onClick = {
                             navController.navigate("DetailsView/${movie.imdbID}")
@@ -82,17 +84,19 @@ fun HomeView(viewModel: MoviesViewModel, navController: NavController) {
                     )
                 }
 
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = Color(0xFFFFD700)
-                        )
+                if (isLoadingMore) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(32.dp),
+                                color = Color(0xFFFFD700)
+                            )
+                        }
                     }
                 }
             }

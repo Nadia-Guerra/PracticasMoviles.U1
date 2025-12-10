@@ -11,13 +11,14 @@ interface ApiMovies {
     @GET(".")
     suspend fun getMovies(
         @Query("s") query: String? = null,
+        @Query("page") page: Int = 1,
         @Query("apikey") apiKey: String = Constants.API_KEY
     ): Response<MoviesModel>
 
 
     @GET(".")
     suspend fun getMovieById(
-        @Query("i") imdbID: String,           // ← imdbID del MovieItem
+        @Query("i") imdbID: String,
         @Query("apikey") apiKey: String = Constants.API_KEY
     ): Response<MovieDetails>
 }
